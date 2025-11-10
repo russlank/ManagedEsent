@@ -36,12 +36,12 @@ namespace Microsoft.Isam.Esent.Interop
         /// <summary>
         /// Low log generation when the backup was made.
         /// </summary>
-        private uint lowGeneration;
+        private JET_LGEN lowGeneration;
 
         /// <summary>
         /// High log generation when the backup was made.
         /// </summary>
-        private uint highGeneration;
+        private JET_LGEN highGeneration;
 
         /// <summary>
         /// Gets the log position of the backup.
@@ -49,8 +49,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LGPOS lgposMark
         {
             [DebuggerStepThrough]
-            get { return this.logPosition; }
-            internal set { this.logPosition = value; }
+            get
+            {
+                return this.logPosition;
+            }
+
+            internal set
+            {
+                this.logPosition = value;
+            }
         }
 
         /// <summary>
@@ -59,28 +66,87 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKLOGTIME bklogtimeMark
         {
             [DebuggerStepThrough]
-            get { return this.backupTime; }
-            internal set { this.backupTime = value; }
+            get
+            {
+                return this.backupTime;
+            }
+
+            internal set
+            {
+                this.backupTime = value;
+            }
         }
 
+#if ESENT
         /// <summary>
         /// Gets the low generation of the backup.
         /// </summary>
-        public int genLow
+        [Obsolete("Use lgenLow instead.")]
+        public Int32 genLow
         {
             [DebuggerStepThrough]
-            get { return (int)this.lowGeneration; }
-            internal set { this.lowGeneration = checked((uint)value); }
+            get
+            {
+                return (Int32)this.lowGeneration;
+            }
+
+            internal set
+            {
+                this.lowGeneration = (JET_LGEN)value;
+            }
         }
 
         /// <summary>
         /// Gets or sets the high generation of the backup.
         /// </summary>
-        public int genHigh
+        [Obsolete("Use lgenHigh instead.")]
+        public Int32 genHigh
         {
             [DebuggerStepThrough]
-            get { return (int)this.highGeneration; }
-            set { this.highGeneration = checked((uint)value); }
+            get
+            {
+                return (Int32)this.highGeneration;
+            }
+
+            set
+            {
+                this.highGeneration = (JET_LGEN)value;
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Gets the low generation of the backup.
+        /// </summary>
+        public JET_LGEN lgenLow
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return this.lowGeneration;
+            }
+
+            internal set
+            {
+                this.lowGeneration = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the high generation of the backup.
+        /// </summary>
+        public JET_LGEN lgenHigh
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return this.highGeneration;
+            }
+
+            set
+            {
+                this.highGeneration = value;
+            }
         }
 
         /// <summary>
@@ -92,8 +158,8 @@ namespace Microsoft.Isam.Esent.Interop
             {
                 return this.lgposMark.HasValue
                        && this.backupTime.HasValue
-                       && 0 != this.lowGeneration
-                       && 0 != this.highGeneration;
+                       && JET_LGEN.Nil != this.lowGeneration
+                       && JET_LGEN.Nil != this.highGeneration;
             }
         }
 
@@ -130,8 +196,8 @@ namespace Microsoft.Isam.Esent.Interop
             return string.Format(
                 CultureInfo.InvariantCulture,
                 "JET_BKINFO({0}-{1}:{2}:{3})",
-                this.genLow,
-                this.genHigh,
+                this.lgenLow,
+                this.lgenHigh,
                 this.lgposMark,
                 this.bklogtimeMark);
         }
@@ -160,9 +226,9 @@ namespace Microsoft.Isam.Esent.Interop
         {
             return this.logPosition.GetHashCode()
                    ^ this.backupTime.GetHashCode()
-                   ^ unchecked((int)this.lowGeneration << 16)
-                   ^ unchecked((int)this.lowGeneration >> 16)
-                   ^ unchecked((int)this.highGeneration);
+                   ^ unchecked(this.lowGeneration.GetHashCode() << 16)
+                   ^ unchecked(this.lowGeneration.GetHashCode() >> 16)
+                   ^ unchecked(this.highGeneration.GetHashCode());
         }
 
         /// <summary>

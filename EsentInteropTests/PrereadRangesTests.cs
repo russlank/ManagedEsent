@@ -13,12 +13,19 @@ namespace InteropApiTests
     using Microsoft.Isam.Esent;
     using Microsoft.Isam.Esent.Interop;
     using Microsoft.Isam.Esent.Interop.Vista;
+    using Microsoft.Isam.Esent.Interop.Windows7;
     using Microsoft.Isam.Esent.Interop.Windows8;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
     /// DML and currency tests for filtered moves.
     /// </summary>
+    /// BT structure -
+    ///                                             RootPg 31
+    /// Pg32(key0-4), Pg33(key5-8), Pg34(key9-12), Pg35(key13-16)................Pg55(92-96), Pg56(97-99)
+    /// BBT structure -
+    ///                                             RootPg 31-46 (SuperPage)(bbt buffer node keys 77-99)
+    /// Pg47(key0-4), Pg48(key5-9), Pg49(key10-14), Pg50(key15-19)................Pg61(key70-74), Pg62(key75-76)
     [TestClass]
     [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules",
         "SA1305:FieldNamesMustNotUseHungarianNotation",
@@ -120,6 +127,16 @@ namespace InteropApiTests
         /// </summary>
         private JET_COLUMNID[] columnIdPreread;
 
+        /// <summary>
+        /// Whether BBTs are enabled or not.
+        /// </summary>
+        private bool isBBTEnabled;
+
+        /// <summary>
+        /// Whether we use BTPrereadContext to do the internal prereads.
+        /// </summary>
+        private bool isInternalPrereadUsingPrereadContext;
+
         #region Setup/Teardown
 
         /// <summary>
@@ -133,6 +150,8 @@ namespace InteropApiTests
             this.database = Path.Combine(this.directory, "database.edb");
 
             SystemParameters.DatabasePageSize = PrereadRangesTests.PageSize;
+            Api.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, Windows7Param.MaxCoalesceReadSize, 256 * 1024, null);
+            Api.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, Windows7Param.MaxCoalesceReadGapSize, 256 * 1024, null);
 
             // ISSUE-2014/10/20-BrettSh - Weird issue where we don't count one of the prereading requests in
             // regular mode, but do in view cache causing the main test check in TestFilteredMoveBeyondIndexRange()
@@ -141,11 +160,14 @@ namespace InteropApiTests
             SystemParameters.EnableViewCache = false;
             this.savedCacheSizeMin = SystemParameters.CacheSizeMin;
             this.savedCacheSizeMax = SystemParameters.CacheSizeMax;
-            SystemParameters.CacheSizeMin = 128;
-            SystemParameters.CacheSizeMax = 128;
+            SystemParameters.CacheSizeMin = 1024;
+            SystemParameters.CacheSizeMax = 1024;
 
             this.instance = SetupHelper.CreateNewInstance(this.directory);
             Api.JetSetSystemParameter(this.instance, JET_SESID.Nil, JET_param.Recovery, 0, "off");
+            this.isInternalPrereadUsingPrereadContext = true;
+
+            Api.JetSetSystemParameter(JET_INSTANCE.Nil, JET_SESID.Nil, (JET_param)235, 1, null);
             Api.JetInit(ref this.instance);
             Api.JetBeginSession(this.instance, out this.sesId, string.Empty, string.Empty);
 
@@ -192,6 +214,7 @@ namespace InteropApiTests
             Api.JetTerm(this.instance);
             SystemParameters.CacheSizeMin = this.savedCacheSizeMin;
             SystemParameters.CacheSizeMax = this.savedCacheSizeMax;
+            SystemParameters.Configuration = 1;
             Cleanup.DeleteDirectoryWithRetry(this.directory);
         }
 
@@ -287,7 +310,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagePrereads = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagePrereads + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
             
             // With LV preread
@@ -296,13 +320,14 @@ namespace InteropApiTests
                 VistaApi.JetGetThreadStats(out stat1);
 
                 int rangesRead;
+
                 Windows8Api.JetPrereadIndexRanges(this.sesId, this.tableId, indexRanges, 0, indexRanges.Length, out rangesRead, this.columnIdPreread, PrereadIndexRangesGrbit.Forward | PrereadIndexRangesGrbit.FirstPageOnly);
                 Assert.AreEqual(rangesRead, 1, string.Format("rangesRead = {0}", rangesRead));
 
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 3, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                Assert.AreEqual(3, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -344,7 +369,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagePrereads = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagePrereads + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -359,7 +385,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 3, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                Assert.AreEqual(3, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -401,7 +427,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagePrereads = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagePrereads + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -459,7 +486,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 23, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, 16 prereads for super page and 14 for leaf pages (keys 10-76).
+                Assert.AreEqual(this.isBBTEnabled ? 30 : 23, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -474,7 +502,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 15, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24 (14 LV pages, 1 preread from seek)
+                Assert.AreEqual(15, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24 (15 LV Pages (keys 10-24))
             }
         }
 
@@ -516,7 +544,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 23, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, 16 prereads for super page and 14 for leaf pages (keys 10-76).
+                Assert.AreEqual(this.isBBTEnabled ? 30 : 23, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -531,7 +560,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 15, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24 (14 LV pages, 1 preread from seek)
+                Assert.AreEqual(15, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24 (15 LV Pages (keys 10-24))
             }
         }
 
@@ -570,7 +599,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagePrereads = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagePrereads + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             /*
@@ -728,7 +758,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagePrereads = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagePrereads + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -822,7 +853,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 7, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT we also do 16 super page preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 7 : 8, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -837,7 +869,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 10, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));    // LVs are only present upto key1 = 24
+                // For normal BT, the on additional page beyond range is preread already as part of JetPrereadIndexRanges.
+                Assert.AreEqual(9, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -879,7 +912,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                int rootPagesPreread = this.isBBTEnabled ? 16 : 0;
+                Assert.AreEqual(rootPagesPreread + 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -894,7 +928,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 3, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                Assert.AreEqual(3, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -973,7 +1007,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 7, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, we have 16 page preread as well.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 7 : 8, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -988,7 +1023,10 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 10, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));    // LVs are only present upto key1 = 24
+                // The one page beyond the range should have been read by the previous JetPrereadIndexRanges but the problem is it is prereading backwards and the additional
+                // page preread by it beyond the range is in backward direction. But when we try reading the LVs corresponding to records as part of JetPrereadIndexRanges
+                // issued here, we read the records in the forward direction. So in this case, we end up doing the one page preread beyond the range in forward direction.
+                Assert.AreEqual(this.isBBTEnabled ? 9 : 10, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));    // LVs are only present upto key1 = 24
             }
         }
 
@@ -1030,7 +1068,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.IsTrue((stat2.cPagePreread - stat1.cPagePreread) == 21, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, keys 77-99 are in the super page.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 15 : 22, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1045,7 +1084,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.IsTrue((stat2.cPagePreread - stat1.cPagePreread) == 18, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                Assert.IsTrue((stat2.cPagePreread - stat1.cPagePreread) == 17, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1097,7 +1136,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 4, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, we have the 16page superpage preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 3 : 4, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1112,7 +1152,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 15, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // No additional one page preerad since end keys is not last key on the page.
+                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 14, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1164,7 +1205,7 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 2 : 1, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1278,7 +1319,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 6, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT we have 16 page superpage preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 5 : 6, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1293,7 +1335,9 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 10, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24 (8 lv pages, 2 prereads from seeks)
+                // For the first range, 16-23, we won't have a one page preread since last key on the page is 24 and since that is greater, we shall short circuit.
+                // For BBT, neither of the ranges are on page boundaries so we don't have any additiona prereads apart from 8 LV prereads.
+                Assert.AreEqual(this.isBBTEnabled ? 8 : 9, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1345,7 +1389,10 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.IsTrue((stat2.cPagePreread - stat1.cPagePreread) == 22, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For non-BBT, apart from the 22 pages preread, we will have two additional pages preread just beyond the range since they are coalescable.
+                // For BBT, we have 16page superpage preread, no additional preread for either ranges as number of preread for first range is less than cpgPrereadBeyondRangeThreshold (4),
+                // and the last leaf page of BBT in second range is only upto key 76, rest of the keys are in the super page.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 4 + 10 : 6 + 18, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1412,7 +1459,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 4, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, we have 16 page super page preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 3 : 4, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1427,7 +1475,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 15, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // No additional one page preerad since end keys is not last key on the page.
+                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 14, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1526,7 +1575,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 6, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, we have 16page super page preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 5 : 6, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1541,7 +1591,9 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 10, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // LVs are only present upto key1 = 24
+                // For the first range, 16-23, we won't have a one page preread since last key on the page is 24 and since that is greater, we shall short circuit.
+                // For BBT, neither of the ranges are on page boundaries so we don't have any additiona prereads apart from 8 LV prereads.
+                Assert.AreEqual(this.isBBTEnabled ? 8 : 9, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1603,7 +1655,8 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 3, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, we have 16page super page preread.
+                Assert.AreEqual(this.isBBTEnabled ? 16 + 2 : 3, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
 
             // With LV preread
@@ -1618,7 +1671,9 @@ namespace InteropApiTests
                 JET_THREADSTATS stat2;
                 VistaApi.JetGetThreadStats(out stat2);
 
-                Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 6, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+                // For BBT, the key range 20-28 doesn't fall on page boundary, so no additional preread beyond range.
+                // So only LV prereads for keys 20-24.
+                Assert.AreEqual(this.isBBTEnabled ? 5 : 6, stat2.cPagePreread - stat1.cPagePreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
             }
         }
 
@@ -1690,6 +1745,7 @@ namespace InteropApiTests
 
             JET_THREADSTATS stat1;
             VistaApi.JetGetThreadStats(out stat1);
+            EseInteropTestHelper.ConsoleWriteLine("Thread-stats before: {0}", stat1.ToString());
 
             this.MoveCursor(JET_Move.Next);
             this.VerifyCurrentRecord(17);
@@ -1702,8 +1758,16 @@ namespace InteropApiTests
 
             JET_THREADSTATS stat2;
             VistaApi.JetGetThreadStats(out stat2);
+            EseInteropTestHelper.ConsoleWriteLine("Thread-stats after: {0}", stat2.ToString());
 
-            Assert.IsTrue(stat2.cPageRead - stat1.cPageRead <= 1, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+            int cpgReadToPreread = this.isInternalPrereadUsingPrereadContext ? 1 : 0;
+
+            // TODO: Verify filter move context logic.
+            if (!this.isBBTEnabled)
+            {
+                Assert.IsTrue(stat2.cPageRead - stat1.cPageRead == 1 - cpgReadToPreread, string.Format("stat2.cPageRead = {0}, stat1.cPageRead = {1}", stat2.cPageRead, stat1.cPageRead));
+                Assert.IsTrue(stat2.cPagePreread - stat1.cPagePreread == 2 + cpgReadToPreread, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));
+            }
         }
 
         /// <summary>
@@ -1810,6 +1874,7 @@ namespace InteropApiTests
 
             JET_THREADSTATS stat1;
             VistaApi.JetGetThreadStats(out stat1);
+            EseInteropTestHelper.ConsoleWriteLine("Thread-stats before: {0}", stat1.ToString());
 
             int rangesRead;
             JET_COLUMNID[] colIdPreread = { this.columnIdExLV, this.columnIdData };
@@ -1818,6 +1883,7 @@ namespace InteropApiTests
 
             JET_THREADSTATS stat2;
             VistaApi.JetGetThreadStats(out stat2);
+            EseInteropTestHelper.ConsoleWriteLine("Thread-stats after: {0}", stat2.ToString());
 
             Assert.AreEqual(stat2.cPagePreread - stat1.cPagePreread, 22, string.Format("stat2.cPagePreread = {0}, stat1.cPagePreread = {1}", stat2.cPagePreread, stat1.cPagePreread));   // 15 lv pages + 7 prereads for seeking
         }
@@ -1883,9 +1949,6 @@ namespace InteropApiTests
             // Force flush cache
             this.ForceFlushCache();
 
-            // Increase cache size so the complete range can fit in
-            this.SetCacheSize(1024);
-
              JET_INDEX_COLUMN[] startColumn = new JET_INDEX_COLUMN[1];
             startColumn[0] = this.CreateKeyColumn(this.columnIdKey1, 0, JetRelop.Equals);
             JET_INDEX_COLUMN[] endColumn = new JET_INDEX_COLUMN[1];
@@ -1911,7 +1974,9 @@ namespace InteropApiTests
             VistaApi.JetGetThreadStats(out stat2);
 
             var cPreread = stat2.cPagePreread - stat1.cPagePreread;
-            Assert.IsTrue(cPreread >= 250 && cPreread <= 274, string.Format("Expected between 250 & 274, Actual = {0}", cPreread));   // max 256 pages of Lv + some seeks
+
+            int rootPagesPreread = this.isBBTEnabled ? 16 : 0;
+            Assert.IsTrue(cPreread >= rootPagesPreread + 122 && cPreread <= rootPagesPreread + 146, string.Format("Expected between 122 & 146, Actual = {0}", cPreread));   // max 128 pages of Lv + some seeks
         }
 
         #endregion Preread Ranges tests
@@ -1926,11 +1991,7 @@ namespace InteropApiTests
         /// <param name="grbit">The grbit.</param>
         private void AttachDatabase(JET_SESID session, string databasePath, AttachDatabaseGrbit grbit)
         {
-#if MANAGEDESENT_ON_WSA || MANAGEDESENT_EXTERNAL_RELEASE
             Api.JetAttachDatabase(session, databasePath, grbit);
-#else
-            this.AttachDatabaseInternal(session, databasePath, grbit);
-#endif
         }
 
         /// <summary>
@@ -2327,20 +2388,6 @@ namespace InteropApiTests
             Api.JetOpenTable(this.sesId, this.dbId, this.tableName, null, 0, OpenTableGrbit.None, out this.tableId);
 
             Api.JetBeginTransaction(this.sesId);
-        }
-
-        /// <summary>
-        /// Sets the cache size to a fixed number
-        /// </summary>
-        /// <param name="cacheSize">Cache size in pages</param>
-        private void SetCacheSize(int cacheSize)
-        {
-            SystemParameters.CacheSizeMin = cacheSize;
-            SystemParameters.CacheSizeMax = cacheSize;
-            while (SystemParameters.CacheSize != cacheSize)
-            {
-                EseInteropTestHelper.ThreadSleep(1);
-            }
         }
 
         #endregion Helpers

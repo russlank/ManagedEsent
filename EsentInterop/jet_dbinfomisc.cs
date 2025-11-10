@@ -17,7 +17,8 @@ namespace Microsoft.Isam.Esent.Interop
     /// The native version of the JET_DBINFOMISC structure.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules",
+    [SuppressMessage(
+        "Microsoft.StyleCop.CSharp.NamingRules",
         "SA1305:FieldNamesMustNotUseHungarianNotation",
         Justification = "This should match the unmanaged API, which isn't capitalized.")]
     [SuppressMessage(
@@ -138,7 +139,8 @@ namespace Microsoft.Isam.Esent.Interop
     /// Adds support for fields that we added in Windows 7.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules",
+    [SuppressMessage(
+        "Microsoft.StyleCop.CSharp.NamingRules",
         "SA1305:FieldNamesMustNotUseHungarianNotation",
         Justification = "This should match the unmanaged API, which isn't capitalized.")]
     [SuppressMessage(
@@ -158,12 +160,12 @@ namespace Microsoft.Isam.Esent.Interop
         /// The minimum log generation required for replaying the logs.
         /// Typically the checkpoint generation.
         /// </summary>
-        public uint genMinRequired;
+        public JET_LGEN genMinRequired;
 
         /// <summary>
         /// The maximum log generation required for replaying the logs.
         /// </summary>
-        public uint genMaxRequired;
+        public JET_LGEN genMaxRequired;
 
         /// <summary>
         /// Creation time of the <see cref="genMaxRequired"/> logfile.
@@ -235,7 +237,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <summary>
         /// The maximum log generation committed to the database. Typically the current log generation.
         /// </summary>
-        public uint genCommitted;
+        public JET_LGEN genCommitted;
 
         // Fields added in JET_DBINFOMISC4
 
@@ -259,7 +261,8 @@ namespace Microsoft.Isam.Esent.Interop
         "Microsoft.StyleCop.CSharp.NamingRules",
         "SA1300:ElementMustBeginWithUpperCaseLetter",
         Justification = "This should match the unmanaged API, which isn't capitalized.")]
-    [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules",
+    [SuppressMessage(
+        "Microsoft.StyleCop.CSharp.NamingRules",
         "SA1305:FieldNamesMustNotUseHungarianNotation",
         Justification = "Need to avoid clash between members and properties.")]
     [SuppressMessage(
@@ -380,12 +383,12 @@ namespace Microsoft.Isam.Esent.Interop
         /// The minimum log generation required for replaying the logs.
         /// Typically the checkpoint generation.
         /// </summary>
-        private int _genMinRequired;
+        private JET_LGEN _genMinRequired;
 
         /// <summary>
         /// The maximum log generation required for replaying the logs.
         /// </summary>
-        private int _genMaxRequired;
+        private JET_LGEN _genMaxRequired;
 
         /// <summary>
         /// Creation time of the <see cref="_genMaxRequired"/> logfile.
@@ -455,7 +458,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <summary>
         /// The maximum log generation committed to the database. Typically the current log generation.
         /// </summary>
-        private int _genCommitted;
+        private JET_LGEN _genCommitted;
 
         /// <summary>
         /// Last successful copy backup.
@@ -478,8 +481,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulVersion
         {
             [DebuggerStepThrough]
-            get { return this._ulVersion; }
-            internal set { this._ulVersion = value; }
+            get
+            {
+                return this._ulVersion;
+            }
+
+            internal set
+            {
+                this._ulVersion = value;
+            }
         }
 
         /// <summary>
@@ -488,8 +498,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulUpdate
         {
             [DebuggerStepThrough]
-            get { return this._ulUpdate; }
-            internal set { this._ulUpdate = value; }
+            get
+            {
+                return this._ulUpdate;
+            }
+
+            internal set
+            {
+                this._ulUpdate = value;
+            }
         }
 
         /// <summary>
@@ -498,8 +515,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_SIGNATURE signDb
         {
             [DebuggerStepThrough]
-            get { return this._signDb; }
-            internal set { this._signDb = value; }
+            get
+            {
+                return this._signDb;
+            }
+
+            internal set
+            {
+                this._signDb = value;
+            }
         }
 
         /// <summary>
@@ -508,8 +532,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_dbstate dbstate
         {
             [DebuggerStepThrough]
-            get { return this._dbstate; }
-            internal set { this._dbstate = value; }
+            get
+            {
+                return this._dbstate;
+            }
+
+            internal set
+            {
+                this._dbstate = value;
+            }
         }
 
         /// <summary>
@@ -519,8 +550,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LGPOS lgposConsistent
         {
             [DebuggerStepThrough]
-            get { return this._lgposConsistent; }
-            internal set { this._lgposConsistent = value; }
+            get
+            {
+                return this._lgposConsistent;
+            }
+
+            internal set
+            {
+                this._lgposConsistent = value;
+            }
         }
 
         /// <summary>
@@ -530,8 +568,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeConsistent
         {
             [DebuggerStepThrough]
-            get { return this._logtimeConsistent; }
-            internal set { this._logtimeConsistent = value; }
+            get
+            {
+                return this._logtimeConsistent;
+            }
+
+            internal set
+            {
+                this._logtimeConsistent = value;
+            }
         }
 
         /// <summary>
@@ -540,8 +585,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeAttach
         {
             [DebuggerStepThrough]
-            get { return this._logtimeAttach; }
-            internal set { this._logtimeAttach = value; }
+            get
+            {
+                return this._logtimeAttach;
+            }
+
+            internal set
+            {
+                this._logtimeAttach = value;
+            }
         }
 
         /// <summary>
@@ -550,8 +602,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LGPOS lgposAttach
         {
             [DebuggerStepThrough]
-            get { return this._lgposAttach; }
-            internal set { this._lgposAttach = value; }
+            get
+            {
+                return this._lgposAttach;
+            }
+
+            internal set
+            {
+                this._lgposAttach = value;
+            }
         }
 
         /// <summary>
@@ -560,8 +619,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeDetach
         {
             [DebuggerStepThrough]
-            get { return this._logtimeDetach; }
-            internal set { this._logtimeDetach = value; }
+            get
+            {
+                return this._logtimeDetach;
+            }
+
+            internal set
+            {
+                this._logtimeDetach = value;
+            }
         }
 
         /// <summary>
@@ -570,8 +636,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LGPOS lgposDetach
         {
             [DebuggerStepThrough]
-            get { return this._lgposDetach; }
-            internal set { this._lgposDetach = value; }
+            get
+            {
+                return this._lgposDetach;
+            }
+
+            internal set
+            {
+                this._lgposDetach = value;
+            }
         }
 
         /// <summary>
@@ -580,8 +653,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_SIGNATURE signLog
         {
             [DebuggerStepThrough]
-            get { return this._signLog; }
-            internal set { this._signLog = value; }
+            get
+            {
+                return this._signLog;
+            }
+
+            internal set
+            {
+                this._signLog = value;
+            }
         }
 
         /// <summary>
@@ -590,8 +670,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKINFO bkinfoFullPrev
         {
             [DebuggerStepThrough]
-            get { return this._bkinfoFullPrev; }
-            internal set { this._bkinfoFullPrev = value; }
+            get
+            {
+                return this._bkinfoFullPrev;
+            }
+
+            internal set
+            {
+                this._bkinfoFullPrev = value;
+            }
         }
 
         /// <summary>
@@ -601,8 +688,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKINFO bkinfoIncPrev
         {
             [DebuggerStepThrough]
-            get { return this._bkinfoIncPrev; }
-            internal set { this._bkinfoIncPrev = value; }
+            get
+            {
+                return this._bkinfoIncPrev;
+            }
+
+            internal set
+            {
+                this._bkinfoIncPrev = value;
+            }
         }
 
         /// <summary>
@@ -611,8 +705,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKINFO bkinfoFullCur
         {
             [DebuggerStepThrough]
-            get { return this._bkinfoFullCur; }
-            internal set { this._bkinfoFullCur = value; }
+            get
+            {
+                return this._bkinfoFullCur;
+            }
+
+            internal set
+            {
+                this._bkinfoFullCur = value;
+            }
         }
 
         /// <summary>
@@ -622,8 +723,15 @@ namespace Microsoft.Isam.Esent.Interop
         public bool fShadowingDisabled
         {
             [DebuggerStepThrough]
-            get { return this._fShadowingDisabled; }
-            internal set { this._fShadowingDisabled = value; }
+            get
+            {
+                return this._fShadowingDisabled;
+            }
+
+            internal set
+            {
+                this._fShadowingDisabled = value;
+            }
         }
 
         /// <summary>
@@ -633,8 +741,15 @@ namespace Microsoft.Isam.Esent.Interop
         public bool fUpgradeDb
         {
             [DebuggerStepThrough]
-            get { return this._fUpgradeDb; }
-            internal set { this._fUpgradeDb = value; }
+            get
+            {
+                return this._fUpgradeDb;
+            }
+
+            internal set
+            {
+                this._fUpgradeDb = value;
+            }
         }
 
         /// <summary>
@@ -643,8 +758,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int dwMajorVersion
         {
             [DebuggerStepThrough]
-            get { return this._dwMajorVersion; }
-            internal set { this._dwMajorVersion = value; }
+            get
+            {
+                return this._dwMajorVersion;
+            }
+
+            internal set
+            {
+                this._dwMajorVersion = value;
+            }
         }
 
         /// <summary>
@@ -653,8 +775,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int dwMinorVersion
         {
             [DebuggerStepThrough]
-            get { return this._dwMinorVersion; }
-            internal set { this._dwMinorVersion = value; }
+            get
+            {
+                return this._dwMinorVersion;
+            }
+
+            internal set
+            {
+                this._dwMinorVersion = value;
+            }
         }
 
         /// <summary>
@@ -663,8 +792,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int dwBuildNumber
         {
             [DebuggerStepThrough]
-            get { return this._dwBuildNumber; }
-            internal set { this._dwBuildNumber = value; }
+            get
+            {
+                return this._dwBuildNumber;
+            }
+
+            internal set
+            {
+                this._dwBuildNumber = value;
+            }
         }
 
         /// <summary>
@@ -673,8 +809,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int lSPNumber
         {
             [DebuggerStepThrough]
-            get { return this._lSPNumber; }
-            internal set { this._lSPNumber = value; }
+            get
+            {
+                return this._lSPNumber;
+            }
+
+            internal set
+            {
+                this._lSPNumber = value;
+            }
         }
 
         /// <summary>
@@ -683,39 +826,106 @@ namespace Microsoft.Isam.Esent.Interop
         public int cbPageSize
         {
             [DebuggerStepThrough]
-            get { return this._cbPageSize; }
-            internal set { this._cbPageSize = value; }
+            get
+            {
+                return this._cbPageSize;
+            }
+
+            internal set
+            {
+                this._cbPageSize = value;
+            }
         }
 
+#if ESENT
         /// <summary>
         /// Gets the minimum log generation required for replaying the logs.
         /// Typically the checkpoint generation.
         /// </summary>
-        public int genMinRequired
+        [Obsolete("Use lgenMinRequired instead.")]
+        public Int32 genMinRequired
         {
             [DebuggerStepThrough]
-            get { return this._genMinRequired; }
-            internal set { this._genMinRequired = value; }
+            get
+            {
+                return (Int32)this._genMinRequired;
+            }
+
+            internal set
+            {
+                this._genMinRequired = (JET_LGEN)value;
+            }
         }
 
         /// <summary>
         /// Gets the maximum log generation required for replaying the logs.
         /// </summary>
-        public int genMaxRequired
+        [Obsolete("Use lgenMaxRequired instead.")]
+        public Int32 genMaxRequired
         {
             [DebuggerStepThrough]
-            get { return this._genMaxRequired; }
-            internal set { this._genMaxRequired = value; }
+            get
+            {
+                return (Int32)this._genMaxRequired;
+            }
+
+            internal set
+            {
+                this._genMaxRequired = (JET_LGEN)value;
+            }
+        }
+#endif
+
+        /// <summary>
+        /// Gets the minimum log generation required for replaying the logs.
+        /// Typically the checkpoint generation.
+        /// </summary>
+        public JET_LGEN lgenMinRequired
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return this._genMinRequired;
+            }
+
+            internal set
+            {
+                this._genMinRequired = value;
+            }
         }
 
         /// <summary>
-        /// Gets the creation time of the <see cref="genMaxRequired"/> logfile.
+        /// Gets the maximum log generation required for replaying the logs.
+        /// </summary>
+        public JET_LGEN lgenMaxRequired
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return this._genMaxRequired;
+            }
+
+            internal set
+            {
+                this._genMaxRequired = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the creation time of the <see cref="lgenMaxRequired"/> logfile.
         /// </summary>
         public JET_LOGTIME logtimeGenMaxCreate
         {
             [DebuggerStepThrough]
-            get { return this._logtimeGenMaxCreate; }
-            internal set { this._logtimeGenMaxCreate = value; }
+            get
+            {
+                return this._logtimeGenMaxCreate;
+            }
+
+            internal set
+            {
+                this._logtimeGenMaxCreate = value;
+            }
         }
 
         /// <summary>
@@ -724,8 +934,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulRepairCount
         {
             [DebuggerStepThrough]
-            get { return this._ulRepairCount; }
-            internal set { this._ulRepairCount = value; }
+            get
+            {
+                return this._ulRepairCount;
+            }
+
+            internal set
+            {
+                this._ulRepairCount = value;
+            }
         }
 
         /// <summary>
@@ -734,8 +951,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeRepair
         {
             [DebuggerStepThrough]
-            get { return this._logtimeRepair; }
-            internal set { this._logtimeRepair = value; }
+            get
+            {
+                return this._logtimeRepair;
+            }
+
+            internal set
+            {
+                this._logtimeRepair = value;
+            }
         }
 
         /// <summary>
@@ -744,8 +968,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulRepairCountOld
         {
             [DebuggerStepThrough]
-            get { return this._ulRepairCountOld; }
-            internal set { this._ulRepairCountOld = value; }
+            get
+            {
+                return this._ulRepairCountOld;
+            }
+
+            internal set
+            {
+                this._ulRepairCountOld = value;
+            }
         }
 
         /// <summary>
@@ -754,8 +985,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulECCFixSuccess
         {
             [DebuggerStepThrough]
-            get { return this._ulECCFixSuccess; }
-            internal set { this._ulECCFixSuccess = value; }
+            get
+            {
+                return this._ulECCFixSuccess;
+            }
+
+            internal set
+            {
+                this._ulECCFixSuccess = value;
+            }
         }
 
         /// <summary>
@@ -764,8 +1002,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeECCFixSuccess
         {
             [DebuggerStepThrough]
-            get { return this._logtimeECCFixSuccess; }
-            internal set { this._logtimeECCFixSuccess = value; }
+            get
+            {
+                return this._logtimeECCFixSuccess;
+            }
+
+            internal set
+            {
+                this._logtimeECCFixSuccess = value;
+            }
         }
 
         /// <summary>
@@ -774,8 +1019,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulECCFixSuccessOld
         {
             [DebuggerStepThrough]
-            get { return this._ulECCFixSuccessOld; }
-            internal set { this._ulECCFixSuccessOld = value; }
+            get
+            {
+                return this._ulECCFixSuccessOld;
+            }
+
+            internal set
+            {
+                this._ulECCFixSuccessOld = value;
+            }
         }
 
         /// <summary>
@@ -784,8 +1036,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulECCFixFail
         {
             [DebuggerStepThrough]
-            get { return this._ulECCFixFail; }
-            internal set { this._ulECCFixFail = value; }
+            get
+            {
+                return this._ulECCFixFail;
+            }
+
+            internal set
+            {
+                this._ulECCFixFail = value;
+            }
         }
 
         /// <summary>
@@ -794,8 +1053,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeECCFixFail
         {
             [DebuggerStepThrough]
-            get { return this._logtimeECCFixFail; }
-            internal set { this._logtimeECCFixFail = value; }
+            get
+            {
+                return this._logtimeECCFixFail;
+            }
+
+            internal set
+            {
+                this._logtimeECCFixFail = value;
+            }
         }
 
         /// <summary>
@@ -804,8 +1070,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulECCFixFailOld
         {
             [DebuggerStepThrough]
-            get { return this._ulECCFixFailOld; }
-            internal set { this._ulECCFixFailOld = value; }
+            get
+            {
+                return this._ulECCFixFailOld;
+            }
+
+            internal set
+            {
+                this._ulECCFixFailOld = value;
+            }
         }
 
         /// <summary>
@@ -814,8 +1087,15 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulBadChecksum
         {
             [DebuggerStepThrough]
-            get { return this._ulBadChecksum; }
-            internal set { this._ulBadChecksum = value; }
+            get
+            {
+                return this._ulBadChecksum;
+            }
+
+            internal set
+            {
+                this._ulBadChecksum = value;
+            }
         }
 
         /// <summary>
@@ -824,8 +1104,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_LOGTIME logtimeBadChecksum
         {
             [DebuggerStepThrough]
-            get { return this._logtimeBadChecksum; }
-            internal set { this._logtimeBadChecksum = value; }
+            get
+            {
+                return this._logtimeBadChecksum;
+            }
+
+            internal set
+            {
+                this._logtimeBadChecksum = value;
+            }
         }
 
         /// <summary>
@@ -834,18 +1121,52 @@ namespace Microsoft.Isam.Esent.Interop
         public int ulBadChecksumOld
         {
             [DebuggerStepThrough]
-            get { return this._ulBadChecksumOld; }
-            internal set { this._ulBadChecksumOld = value; }
+            get
+            {
+                return this._ulBadChecksumOld;
+            }
+
+            internal set
+            {
+                this._ulBadChecksumOld = value;
+            }
         }
+
+#if ESENT
+        /// <summary>
+        /// Gets the maximum log generation committed to the database. Typically the current log generation.
+        /// </summary>
+        [Obsolete("Use lgenCommitted instead.")]
+        public Int32 genCommitted
+        {
+            [DebuggerStepThrough]
+            get
+            {
+                return (Int32) this._genCommitted;
+            }
+
+            internal set
+            {
+                this._genCommitted = (JET_LGEN)value;
+            }
+        }
+#endif
 
         /// <summary>
         /// Gets the maximum log generation committed to the database. Typically the current log generation.
         /// </summary>
-        public int genCommitted
+        public JET_LGEN lgenCommitted
         {
             [DebuggerStepThrough]
-            get { return this._genCommitted; }
-            internal set { this._genCommitted = value; }
+            get
+            {
+                return this._genCommitted;
+            }
+
+            internal set
+            {
+                this._genCommitted = value;
+            }
         }
 
         /// <summary>
@@ -854,8 +1175,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKINFO bkinfoCopyPrev
         {
             [DebuggerStepThrough]
-            get { return this._bkinfoCopyPrev; }
-            internal set { this._bkinfoCopyPrev = value; }
+            get
+            {
+                return this._bkinfoCopyPrev;
+            }
+
+            internal set
+            {
+                this._bkinfoCopyPrev = value;
+            }
         }
 
         /// <summary>
@@ -865,8 +1193,15 @@ namespace Microsoft.Isam.Esent.Interop
         public JET_BKINFO bkinfoDiffPrev
         {
             [DebuggerStepThrough]
-            get { return this._bkinfoDiffPrev; }
-            internal set { this._bkinfoDiffPrev = value; }
+            get
+            {
+                return this._bkinfoDiffPrev;
+            }
+
+            internal set
+            {
+                this._bkinfoDiffPrev = value;
+            }
         }
 
         #endregion
@@ -909,8 +1244,8 @@ namespace Microsoft.Isam.Esent.Interop
                 this._dwBuildNumber,
                 this._lSPNumber,
                 this._cbPageSize,
-                this._genMinRequired,
-                this._genMaxRequired,
+                this._genMinRequired.GetHashCode(),
+                this._genMaxRequired.GetHashCode(),
                 this._logtimeGenMaxCreate.GetHashCode(),
                 this._ulRepairCount,
                 this._logtimeRepair.GetHashCode(),
@@ -924,7 +1259,7 @@ namespace Microsoft.Isam.Esent.Interop
                 this._ulBadChecksum,
                 this._logtimeBadChecksum.GetHashCode(),
                 this._ulBadChecksumOld,
-                this._genCommitted,
+                this._genCommitted.GetHashCode(),
                 this._bkinfoCopyPrev.GetHashCode(),
                 this._bkinfoDiffPrev.GetHashCode(),
             };
@@ -1053,8 +1388,8 @@ namespace Microsoft.Isam.Esent.Interop
 
             unchecked
             {
-                this._genMinRequired = (int)native.genMinRequired;
-                this._genMaxRequired = (int)native.genMaxRequired;
+                this._genMinRequired = native.genMinRequired;
+                this._genMaxRequired = native.genMaxRequired;
                 this._logtimeGenMaxCreate = native.logtimeGenMaxCreate;
                 this._ulRepairCount = (int)native.ulRepairCount;
                 this._logtimeRepair = native.logtimeRepair;
@@ -1068,7 +1403,7 @@ namespace Microsoft.Isam.Esent.Interop
                 this._ulBadChecksum = (int)native.ulBadChecksum;
                 this._logtimeBadChecksum = native.logtimeBadChecksum;
                 this._ulBadChecksumOld = (int)native.ulBadChecksumOld;
-                this._genCommitted = (int)native.genCommitted;
+                this._genCommitted = native.genCommitted;
                 this._bkinfoCopyPrev = native.bkinfoCopyPrev;
                 this._bkinfoDiffPrev = native.bkinfoDiffPrev;
             }
@@ -1080,7 +1415,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>The native version of the structure.</returns>
         internal NATIVE_DBINFOMISC GetNativeDbinfomisc()
         {
-            NATIVE_DBINFOMISC native = new NATIVE_DBINFOMISC();
+            NATIVE_DBINFOMISC native = default(NATIVE_DBINFOMISC);
 
             unchecked
             {
@@ -1116,14 +1451,14 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>The native version of the structure.</returns>
         internal NATIVE_DBINFOMISC4 GetNativeDbinfomisc4()
         {
-            NATIVE_DBINFOMISC4 native = new NATIVE_DBINFOMISC4();
+            NATIVE_DBINFOMISC4 native = default(NATIVE_DBINFOMISC4);
 
             native.dbinfo = this.GetNativeDbinfomisc();
 
             unchecked
             {
-                native.genMinRequired = (uint)this._genMinRequired;
-                native.genMaxRequired = (uint)this._genMaxRequired;
+                native.genMinRequired = this._genMinRequired;
+                native.genMaxRequired = this._genMaxRequired;
                 native.logtimeGenMaxCreate = this._logtimeGenMaxCreate;
                 native.ulRepairCount = (uint)this._ulRepairCount;
                 native.logtimeRepair = this._logtimeRepair;
@@ -1137,7 +1472,7 @@ namespace Microsoft.Isam.Esent.Interop
                 native.ulBadChecksum = (uint)this._ulBadChecksum;
                 native.logtimeBadChecksum = this._logtimeBadChecksum;
                 native.ulBadChecksumOld = (uint)this._ulBadChecksumOld;
-                native.genCommitted = (uint)this._genCommitted;
+                native.genCommitted = this._genCommitted;
                 native.bkinfoCopyPrev = this._bkinfoCopyPrev;
                 native.bkinfoDiffPrev = this._bkinfoDiffPrev;
             }

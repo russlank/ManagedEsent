@@ -27,7 +27,7 @@ namespace Microsoft.Isam.Esent.Interop
         public static JET_INSTANCE Nil
         {
             [DebuggerStepThrough]
-            get { return new JET_INSTANCE(); }
+            get { return default(JET_INSTANCE); }
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -143,7 +143,7 @@ namespace Microsoft.Isam.Esent.Interop
         public static JET_SESID Nil
         {
             [DebuggerStepThrough]
-            get { return new JET_SESID(); }
+            get { return default(JET_SESID); }
         }
 
         /// <summary>
@@ -214,7 +214,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -260,7 +260,7 @@ namespace Microsoft.Isam.Esent.Interop
         public static JET_TABLEID Nil
         {
             [DebuggerStepThrough]
-            get { return new JET_TABLEID(); }
+            get { return default(JET_TABLEID); }
         }
 
         /// <summary>
@@ -331,7 +331,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -442,7 +442,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -487,7 +487,7 @@ namespace Microsoft.Isam.Esent.Interop
         public static JET_COLUMNID Nil
         {
             [DebuggerStepThrough]
-            get { return new JET_COLUMNID(); }
+            get { return default(JET_COLUMNID); }
         }
 
         /// <summary>
@@ -604,7 +604,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -796,7 +796,7 @@ namespace Microsoft.Isam.Esent.Interop
         public static JET_HANDLE Nil
         {
             [DebuggerStepThrough]
-            get { return new JET_HANDLE(); }
+            get { return default(JET_HANDLE); }
         }
 
         /// <summary>
@@ -867,7 +867,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -1033,17 +1033,17 @@ namespace Microsoft.Isam.Esent.Interop
         /// <summary>
         /// Internal use only.
         /// </summary>
-        internal IntPtr IndexId1;
+        internal uint ObjidFDP;
 
         /// <summary>
         /// Internal use only.
         /// </summary>
-        internal uint IndexId2;
+        internal IntPtr PfcbIndex;
 
         /// <summary>
         /// Internal use only.
         /// </summary>
-        internal uint IndexId3;
+        internal uint PgnoFDP;
 
         /// <summary>
         /// The size of a JET_INDEXID structure.
@@ -1091,7 +1091,7 @@ namespace Microsoft.Isam.Esent.Interop
         /// <returns>True if the two instances are equal.</returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || GetType() != obj.GetType())
+            if (obj == null || this.GetType() != obj.GetType())
             {
                 return false;
             }
@@ -1107,10 +1107,10 @@ namespace Microsoft.Isam.Esent.Interop
         {
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "JET_INDEXID(0x{0:x}:0x{1:x}:0x{2:x})",
-                this.IndexId1,
-                this.IndexId2,
-                this.IndexId3);
+                "JET_INDEXID(0x{0}:0x{1}:0x{2})",
+                this.ObjidFDP.ToString("x"),
+                this.PfcbIndex.ToString("x"),
+                this.PgnoFDP.ToString("x"));
         }
 
         /// <summary>
@@ -1120,9 +1120,9 @@ namespace Microsoft.Isam.Esent.Interop
         public override int GetHashCode()
         {
             return this.CbStruct.GetHashCode()
-                   ^ this.IndexId1.GetHashCode()
-                   ^ this.IndexId2.GetHashCode()
-                   ^ this.IndexId3.GetHashCode();
+                   ^ this.ObjidFDP.GetHashCode()
+                   ^ this.PfcbIndex.GetHashCode()
+                   ^ this.PgnoFDP.GetHashCode();
         }
 
         /// <summary>
@@ -1134,9 +1134,9 @@ namespace Microsoft.Isam.Esent.Interop
         public bool Equals(JET_INDEXID other)
         {
             return this.CbStruct == other.CbStruct
-                   && this.IndexId1 == other.IndexId1
-                   && this.IndexId2 == other.IndexId2
-                   && this.IndexId3 == other.IndexId3;
+                   && this.ObjidFDP == other.ObjidFDP
+                   && this.PfcbIndex == other.PfcbIndex
+                   && this.PgnoFDP == other.PgnoFDP;
         }
     }
 }

@@ -7,6 +7,7 @@
 namespace InteropApiTests
 {
     using System;
+    using System.Collections.Generic;
     using Microsoft.Isam.Esent.Interop;
     using Microsoft.Isam.Esent.Interop.Windows8;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -18,6 +19,124 @@ namespace InteropApiTests
     public partial class ComparableTests
     {
         /// <summary>
+        /// Check that JET_LGEN structures can be compared.
+        /// </summary>
+        [TestMethod]
+        [Priority(0)]
+        [Description("Check that JET_LGEN structures can be compared")]
+        public void VerifyJetLgenComparison()
+        {
+            // These positions are in ascending order
+            var lgens = new[]
+            {
+                (JET_LGEN)1,
+                (JET_LGEN)2,
+                (JET_LGEN)3,
+                (JET_LGEN)4,
+                (JET_LGEN)5,
+                (JET_LGEN)6,
+            };
+
+            // It would be nice if this was a generic helper method, but that won't
+            // work for the operators.
+            for (int i = 0; i < lgens.Length - 1; ++i)
+            {
+                TestEqualObjects(lgens[i], lgens[i]);
+                Assert.IsTrue(lgens[i] <= lgens[i], "<=");
+                Assert.IsTrue(lgens[i] >= lgens[i], ">=");
+
+                for (int j = i + 1; j < lgens.Length; ++j)
+                {
+                    TestOrderedObjects(lgens[i], lgens[j]);
+                    Assert.IsTrue(lgens[i] < lgens[j], "<");
+                    Assert.IsTrue(lgens[i] <= lgens[j], "<=");
+                    Assert.IsTrue(lgens[j] > lgens[i], ">");
+                    Assert.IsTrue(lgens[j] >= lgens[i], ">=");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check that JET_LGEN operators are correct.
+        /// </summary>
+        [TestMethod]
+        [Priority(0)]
+        [Description("Check that JET_LGEN operators are correct")]
+        public void VerifyJetLgenOperators()
+        {
+            for (int i = 0; i < 1000; ++i)
+            {
+                // int conversion
+                JET_LGEN lgen = (JET_LGEN)i;
+                Assert.AreEqual(i, (int)lgen);
+                Assert.AreEqual(lgen, (JET_LGEN)(int)lgen);
+
+                // comparison
+                for (int j = 0; j < 1000; ++j)
+                {
+                    JET_LGEN lgen2 = (JET_LGEN)j;
+
+                    Assert.AreEqual(i == j, lgen == lgen2);
+                    Assert.AreEqual(i != j, lgen != lgen2);
+                    Assert.AreEqual(i >= j, lgen >= lgen2);
+                    Assert.AreEqual(i <= j, lgen <= lgen2);
+                    Assert.AreEqual(i > j, lgen > lgen2);
+                    Assert.AreEqual(i < j, lgen < lgen2);
+                }
+
+                // arithmetic
+                for (int num = 0 - i; num <= i; ++num)
+                {
+                    JET_LGEN jlgen3 = lgen + num;
+                    Assert.AreEqual(i + num, (int)jlgen3);
+                    Assert.AreEqual(i, (int)(jlgen3 - num));
+                }
+
+                // max / min
+                Assert.AreEqual(lgen, JET_LGEN.Min(lgen, lgen + 1));
+                Assert.AreEqual(lgen + 1, JET_LGEN.Max(lgen, lgen + 1));
+
+                // ++ operator
+                JET_LGEN lgent1 = lgen++;
+                Assert.AreEqual(i, (int)lgent1);
+                Assert.AreEqual(i + 1, (int)lgen);
+                JET_LGEN lgent2 = ++lgen;
+                Assert.AreEqual(i + 2, (int)lgent2);
+                Assert.AreEqual(i + 2, (int)lgen);
+
+                // -- operator
+                JET_LGEN lgent3 = lgen--;
+                Assert.AreEqual(i + 2, (int)lgent3);
+                Assert.AreEqual(i + 1, (int)lgen);
+                JET_LGEN lgent4 = --lgen;
+                Assert.AreEqual(i, (int)lgent4);
+                Assert.AreEqual(i, (int)lgen);
+            }
+
+            // eqauls to differnt type
+            Assert.IsFalse(JET_LGEN.Nil.Equals(null));
+            Assert.IsFalse(JET_LGEN.Nil.Equals(JET_HANDLE.Nil));
+            Assert.IsFalse(JET_LGEN.Nil.Equals(JET_LGEN.Invalid));
+
+            // Dictionary
+            Dictionary<JET_LGEN, int> map = new Dictionary<JET_LGEN, int>();
+            for (int i = 0; i < 100; ++i)
+            {
+                map[(JET_LGEN)i] = i;
+            }
+
+            for (int i = 0; i < 100; ++i)
+            {
+                map[(JET_LGEN)i] = map[(JET_LGEN)i] * i;
+            }
+
+            for (int i = 0; i < 100; ++i)
+            {
+                Assert.AreEqual(i * i, map[(JET_LGEN)i]);
+            }
+        }
+
+        /// <summary>
         /// Check that JET_LGPOS structures can be compared.
         /// </summary>
         [TestMethod]
@@ -28,12 +147,12 @@ namespace InteropApiTests
             // These positions are in ascending order
             var positions = new[]
             {
-                new JET_LGPOS { lGeneration = 1, isec = 3, ib = 5 },
-                new JET_LGPOS { lGeneration = 1, isec = 3, ib = 6 },
-                new JET_LGPOS { lGeneration = 1, isec = 4, ib = 4 },
-                new JET_LGPOS { lGeneration = 1, isec = 4, ib = 5 },
-                new JET_LGPOS { lGeneration = 2, isec = 2, ib = 2 },
-                new JET_LGPOS { lGeneration = 2, isec = 3, ib = 5 },
+                new JET_LGPOS { lgen = (JET_LGEN)1, isec = 3, ib = 5 },
+                new JET_LGPOS { lgen = (JET_LGEN)1, isec = 3, ib = 6 },
+                new JET_LGPOS { lgen = (JET_LGEN)1, isec = 4, ib = 4 },
+                new JET_LGPOS { lgen = (JET_LGEN)1, isec = 4, ib = 5 },
+                new JET_LGPOS { lgen = (JET_LGEN)2, isec = 2, ib = 2 },
+                new JET_LGPOS { lgen = (JET_LGEN)2, isec = 3, ib = 5 },
             };
 
             // It would be nice if this was a generic helper method, but that won't
